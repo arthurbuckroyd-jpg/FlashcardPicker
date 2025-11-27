@@ -1,15 +1,24 @@
+// ---------------------------
+// GROUP + CARD LOGIC
+// ---------------------------
+
 let groups = [];
 let currentGroup = [];
 let currentIndex = 0;
 
+// HTML references
+const flashcardEl = document.getElementById("flashcard");
+const qEl = document.getElementById("cardQ");
+const aEl = document.getElementById("cardA");
+
 function parseInput() {
     const raw = document.getElementById("groupsInput").value;
+
     groups = raw
         .split("\n\n")
         .map(block => block.split("\n").map(x => x.trim()).filter(x => x));
 
-    if (groups.length === 0 || groups[0].length === 0) return;
-
+    if (groups.length === 0) return;
     pickRandomGroup();
 }
 
@@ -20,48 +29,70 @@ function pickRandomGroup() {
 }
 
 function shiftCard(amount) {
-    const card = document.getElementById("flashcard");
-    card.classList.add("fade-out");
+    flashcardEl.classList.add("flipping");
 
     setTimeout(() => {
         currentIndex = (currentIndex + amount + currentGroup.length) % currentGroup.length;
         updateCard();
-        card.classList.remove("fade-out");
-        card.classList.add("fade-in");
-
-        setTimeout(() => card.classList.remove("fade-in"), 200);
-    }, 200);
+        flashcardEl.classList.remove("flipping");
+    }, 300);
 }
 
+// Update card front/back content
 function updateCard() {
-    document.getElementById("flashcard").textContent = currentGroup[currentIndex];
+    const value = currentGroup[currentIndex];
+
+    // Same value on both sides unless you make multi-side later
+    qEl.textContent = value;
+    aEl.textContent = value;
 }
 
-// SAVE SYSTEM
-async function saveData() {
-    const groupsInput = document.getElementById("groupsInput").value;
+// Toggle flip animation
+flashcardEl.addEventListener("click", () => {
+    flashcardEl.classList.toggle("flipped");
+});
 
-    const res = await fetch("/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: groupsInput })
-    });
 
-    const out = await res.json();
-    alert("Your code: " + out.code);
+// ---------------------------
+// SAVE / LOAD (Code System)
+// ---------------------------
+
+// JSON → compressed Base64 code
+function generateSaveCode(data) {
+    const json = JSON.stringify(data);
+    return LZString.compressToBase64(json);
 }
 
-async function loadData() {
-    const code = prompt("Enter the code:");
+// code → JSON
+function loadFromSaveCode(code) {
+    const json = LZString.decompressFromBase64(code);
+    if (!json) return null;
+    return JSON.parse(json);
+}
+
+// Button: SAVE
+document.getElementById("saveBtn").addEventListener("click", () => {
+    const raw = document.getElementById("groupsInput").value.trim();
+
+    const code = generateSaveCode({ text: raw });
+    navigator.clipboard.writeText(code).catch(() => {});
+
+    alert("Your save code (copied to clipboard):\n\n" + code);
+});
+
+// Button: LOAD
+document.getElementById("loadBtn").addEventListener("click", () => {
+    const code = document.getElementById("loadInput").value.trim();
     if (!code) return;
 
-    const res = await fetch("/load/" + code);
-    if (!res.ok) {
-        alert("Code not found.");
+    const data = loadFromSaveCode(code);
+    if (!data || !data.text) {
+        alert("Invalid or corrupted code.");
         return;
     }
 
-    const out = await res.json();
-    document.getElementById("groupsInput").value = out.data;
+    document.getElementById("groupsInput").value = data.text;
     parseInput();
-}
+
+    alert("Flashcards restored.");
+});
