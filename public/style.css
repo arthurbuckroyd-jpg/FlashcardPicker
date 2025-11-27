@@ -1,29 +1,25 @@
 /* Page layout */
-
 body {
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
     background: #0e1a33;
     color: #e3e9ff;
+    font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
 }
 
 h1 {
     margin-top: 25px;
-    margin-bottom: 15px;
     color: #aac3ff;
-    font-weight: 600;
 }
 
 /* Input container */
-
 .container {
+    margin-top: 20px;
     background: #1b2646;
-    padding: 18px 20px 14px;
+    padding: 20px;
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
@@ -32,58 +28,46 @@ h1 {
 
 textarea {
     width: 100%;
-    height: 150px;
+    height: 160px;
+    background: #162447;
+    color: white;
+    border: 1px solid #3f5b99;
     padding: 10px;
     border-radius: 8px;
-    border: 1px solid #3f5b99;
-    background: #162447;
-    color: #e3e9ff;
     resize: vertical;
-    font-size: 14px;
 }
 
 button {
-    border: none;
-    border-radius: 8px;
     background: #1b3c8e;
     color: white;
-    padding: 9px 12px;
-    margin-top: 10px;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
     cursor: pointer;
+    margin-top: 10px;
     font-size: 14px;
-    transition: background 0.2s ease, transform 0.1s ease;
 }
 
 button:hover {
     background: #163170;
-    transform: translateY(-1px);
 }
-
-button:active {
-    transform: translateY(0);
-}
-
-/* Save/load row */
 
 .save-load-row {
     display: flex;
     gap: 8px;
     margin-top: 10px;
-    align-items: center;
 }
 
 #loadInput {
     flex: 1;
     padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #3f5b99;
     background: #141f3a;
-    color: #e3e9ff;
-    font-size: 13px;
+    border: 1px solid #3f5b99;
+    border-radius: 8px;
+    color: white;
 }
 
-/* Card + arrows */
-
+/* Card and arrows */
 .card-wrapper {
     margin-top: 30px;
     display: flex;
@@ -99,39 +83,28 @@ button:active {
     max-width: 420px;
     min-height: 110px;
     border-radius: 14px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
     font-size: 22px;
-    font-weight: 500;
-    color: #dfe5ff;
-    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    text-align: center;
+    color: #dfe5ff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.65);
+    transition: transform 0.35s ease;
 }
 
-/* Lively flip-ish animation when changing cards */
+/* Flip animation */
 .card.flip {
-    animation: cardFlip 0.35s ease;
+    animation: flipAnim 0.35s ease;
 }
 
-@keyframes cardFlip {
-    0% {
-        transform: perspective(600px) rotateY(0deg) scale(1);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
-    }
-    50% {
-        transform: perspective(600px) rotateY(25deg) scale(0.95);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
-    100% {
-        transform: perspective(600px) rotateY(0deg) scale(1);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
-    }
+@keyframes flipAnim {
+    0% { transform: rotateY(0deg) scale(1); }
+    50% { transform: rotateY(20deg) scale(0.93); }
+    100% { transform: rotateY(0deg) scale(1); }
 }
 
 /* Arrows */
-
 .arrow {
     width: 42px;
     height: 42px;
@@ -144,15 +117,10 @@ button:active {
     font-size: 22px;
     cursor: pointer;
     user-select: none;
-    transition: background 0.2s ease, transform 0.1s ease;
+    transition: background 0.15s ease;
 }
 
 .arrow:hover {
     background: #163170;
-    transform: translateY(-1px);
-}
-
-.arrow:active {
-    transform: translateY(0);
 }
 
