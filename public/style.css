@@ -1,9 +1,11 @@
+/* Page layout */
+
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background: #0d1b2a;
-    color: white;
+    background: #0e1a33;
+    color: #e3e9ff;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -11,138 +13,146 @@ body {
 }
 
 h1 {
-    margin-top: 20px;
-    color: #e0e6ed;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    color: #aac3ff;
+    font-weight: 600;
 }
 
+/* Input container */
+
 .container {
-    margin-top: 20px;
-    background: #1b263b;
-    padding: 20px;
+    background: #1b2646;
+    padding: 18px 20px 14px;
     border-radius: 12px;
     width: 90%;
-    max-width: 700px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    max-width: 600px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 textarea {
     width: 100%;
     height: 150px;
-    background: #0f253f;
-    color: #f0f6ff;
-    border: 1px solid #415a77;
-    border-radius: 6px;
     padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #3f5b99;
+    background: #162447;
+    color: #e3e9ff;
     resize: vertical;
+    font-size: 14px;
 }
 
 button {
-    margin-top: 10px;
-    padding: 10px 15px;
     border: none;
-    border-radius: 6px;
-    background: #1d3557;
+    border-radius: 8px;
+    background: #1b3c8e;
     color: white;
+    padding: 9px 12px;
+    margin-top: 10px;
     cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease, transform 0.1s ease;
 }
 
 button:hover {
-    background: #284a78;
+    background: #163170;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Save/load row */
+
+.save-load-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    align-items: center;
+}
+
+#loadInput {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #3f5b99;
+    background: #141f3a;
+    color: #e3e9ff;
+    font-size: 13px;
+}
+
+/* Card + arrows */
+
+.card-wrapper {
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
 }
 
 .card {
-    width: 330px;
-    height: 200px;
-    perspective: 1200px;
-    margin: 40px auto;
-}
-
-.card .inner {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(.22, 1.45, .36, 1); /* lively spring */
-}
-
-.card.flipped .inner {
-    transform: rotateY(180deg) scale(1.03); /* slight punch */
-}
-
-.card .front,
-.card .back {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    background-color: #1e1e1e; /* darker palette */
-    color: #fff;
-    font-size: 1.3rem;
+    background: #1a2646;
+    padding: 30px 35px;
+    min-width: 260px;
+    max-width: 420px;
+    min-height: 110px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    font-size: 22px;
+    font-weight: 500;
+    color: #dfe5ff;
+    text-align: center;
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding: 15px;
-    position: absolute;
-    backface-visibility: hidden;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    justify-content: center;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
 
-.card .back {
-    transform: rotateY(180deg);
+/* Lively flip-ish animation when changing cards */
+.card.flip {
+    animation: cardFlip 0.35s ease;
 }
 
-.controls {
-    margin: 20px auto;
-    width: 330px;
-    display: flex;
-    gap: 10px;
+@keyframes cardFlip {
+    0% {
+        transform: perspective(600px) rotateY(0deg) scale(1);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    }
+    50% {
+        transform: perspective(600px) rotateY(25deg) scale(0.95);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    100% {
+        transform: perspective(600px) rotateY(0deg) scale(1);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+    }
 }
 
-button {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-input {
-    flex: 1;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background-color: #222;
-    color: white;
-}
+/* Arrows */
 
 .arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    color: #e0e6ed;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #1b3c8e;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
     cursor: pointer;
     user-select: none;
+    transition: background 0.2s ease, transform 0.1s ease;
 }
 
 .arrow:hover {
-    color: #a8c4ff;
+    background: #163170;
+    transform: translateY(-1px);
 }
 
-.arrow-left {
-    left: 10px;
+.arrow:active {
+    transform: translateY(0);
 }
 
-.arrow-right {
-    right: 10px;
-}
-
-.fade-out {
-    opacity: 0;
-    transform: scale(0.92);
-}
-
-.fade-in {
-    opacity: 1;
-    transform: scale(1);
-
-}
