@@ -3,45 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <title>Flashcard Group Picker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Flashcard Group Picker</h1>
 
-    <div class="container">
-        <textarea id="groupsInput" placeholder="Enter groups separated by a blank line.
+<h1>Flashcard Group Picker</h1>
+
+<div class="container">
+    <textarea id="groupsInput" placeholder="Enter groups separated by a blank line.
 
 Example:
-Item A1
-Item A2
+Apple
+Banana
+Pear
 
-Item B1
-Item B2
-Item B3"></textarea>
+Dog
+Cat
+Fish"></textarea>
 
-        <button onclick="parseInput()">Start / Pick Random Group</button>
+    <button onclick="parseInput()">Start / Random Group</button>
 
-        <div class="save-load-row">
-            <button id="saveBtn">Save → Code</button>
-            <input id="loadInput" placeholder="Enter code to load">
-            <button id="loadBtn">Load</button>
-        </div>
+    <div class="save-load-row">
+        <button id="saveBtn">Save → Code</button>
+        <input id="loadInput" placeholder="Enter code">
+        <button id="loadBtn">Load</button>
+    </div>
+</div>
+
+<div class="card-wrapper">
+    <div class="arrow left-arrow" onclick="shiftCard(-1)">&#10094;</div>
+
+    <div id="flashcard" class="card">
+        Enter groups and press Start.
     </div>
 
-    <div class="card-wrapper">
-        <div class="arrow left-arrow" onclick="shiftCard(-1)">&#10094;</div>
+    <div class="arrow right-arrow" onclick="shiftCard(1)">&#10095;</div>
+</div>
 
-        <div id="flashcard" class="card">
-            Enter some groups and press “Start”.
-        </div>
-
-        <div class="arrow right-arrow" onclick="shiftCard(1)">&#10095;</div>
-    </div>
-
-    <!-- Compression library for save/load codes -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-    <script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
-
-
