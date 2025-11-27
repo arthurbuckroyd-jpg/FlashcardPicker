@@ -1,6 +1,6 @@
-// ---------------------------
+// ========================
 // GROUP + CARD LOGIC
-// ---------------------------
+// ========================
 
 let groups = [];
 let currentGroup = [];
@@ -8,19 +8,19 @@ let currentIndex = 0;
 
 const flashcardEl = document.getElementById("flashcard");
 
-// Parse textarea into groups separated by blank lines
+// Parse textarea → create groups
 function parseInput() {
     const raw = document.getElementById("groupsInput").value;
 
     groups = raw
-        .split(/\n\s*\n/)                  // split by blank lines
+        .split(/\n\s*\n/) // blank line
         .map(block =>
             block
                 .split("\n")
-                .map(x => x.trim())
-                .filter(x => x.length > 0)
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
         )
-        .filter(g => g.length > 0);
+        .filter(group => group.length > 0);
 
     if (groups.length === 0) {
         flashcardEl.textContent = "No valid groups found.";
@@ -30,24 +30,24 @@ function parseInput() {
     pickRandomGroup();
 }
 
-// Pick a random group and random starting item
+// Pick random group + random card
 function pickRandomGroup() {
     currentGroup = groups[Math.floor(Math.random() * groups.length)];
     currentIndex = Math.floor(Math.random() * currentGroup.length);
     updateCard();
 }
 
-// Shift within the current group, wrapping around
+// Move left/right with wrap-around
 function shiftCard(direction) {
     if (!currentGroup.length) return;
 
-    // trigger flip-ish animation
     flashcardEl.classList.add("flip");
 
     setTimeout(() => {
         currentIndex =
             (currentIndex + direction + currentGroup.length) %
             currentGroup.length;
+
         updateCard();
     }, 150);
 
@@ -56,50 +56,52 @@ function shiftCard(direction) {
     }, 350);
 }
 
-// Update the text on the card
+// Update card text
 function updateCard() {
     flashcardEl.textContent = currentGroup[currentIndex];
 }
 
-// ---------------------------
-// SAVE / LOAD (CODE SYSTEM)
-// ---------------------------
 
-// Convert data to compressed base64 code
+// ========================
+// SAVE → CODE  /  LOAD
+// ========================
+
+// Create compressed code
 function generateSaveCode(data) {
-    const json = JSON.stringify(data);
-    return LZString.compressToBase64(json);
+    return LZString.compressToBase64(JSON.stringify(data));
 }
 
-// Convert code back to data
+// Decode compressed code
 function loadFromSaveCode(code) {
-    const json = LZString.decompressFromBase64(code);
-    if (!json) return null;
-    return JSON.parse(json);
+    try {
+        const json = LZString.decompressFromBase64(code);
+        return JSON.parse(json);
+    } catch {
+        return null;
+    }
 }
 
-// Save button → generate code
+// Save button
 document.getElementById("saveBtn").addEventListener("click", () => {
-    const raw = document.getElementById("groupsInput").value.trim();
-    if (!raw) {
-        alert("Nothing to save. Enter some groups first.");
+    const text = document.getElementById("groupsInput").value.trim();
+    if (!text) {
+        alert("Nothing to save.");
         return;
     }
 
-    const code = generateSaveCode({ text: raw });
+    const code = generateSaveCode({ text });
 
-    // Try to copy to clipboard (fails silently if blocked)
     navigator.clipboard?.writeText(code).catch(() => {});
-
-    alert("Your save code (also copied to clipboard if allowed):\n\n" + code);
+    alert("Save code (copied):\n\n" + code);
 });
 
-// Load button → restore from code
+// Load button
 document.getElementById("loadBtn").addEventListener("click", () => {
     const code = document.getElementById("loadInput").value.trim();
     if (!code) return;
 
     const data = loadFromSaveCode(code);
+
     if (!data || !data.text) {
         alert("Invalid or corrupted code.");
         return;
@@ -107,5 +109,5 @@ document.getElementById("loadBtn").addEventListener("click", () => {
 
     document.getElementById("groupsInput").value = data.text;
     parseInput();
-    alert("Flashcards restored from code.");
 });
+
