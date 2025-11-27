@@ -117,6 +117,21 @@
   </style>
 </head>
 <body>
+  <div class="controls">
+    <button id="saveBtn">Save Flashcards</button>
+    <input id="loadInput" placeholder="Enter save code" />
+    <button id="loadBtn">Load</button>
+</div>
+
+<div id="flashcard" class="card">
+    <div class="inner">
+        <div class="front" id="cardQ"></div>
+        <div class="back" id="cardA"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script src="script.js"></script>
   <div class="container">
     <h1>Flashcard Group Picker</h1>
 
@@ -204,4 +219,5 @@ Item B2"></textarea>
     }
   </script>
 </body>
+
 </html>
