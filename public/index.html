@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Flashcard Group Picker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top-bar">
+    <div class="logo">
+        <span class="logo-mark">FC</span>
+        <span class="logo-text">Flashcard Group Picker</span>
+    </div>
+    <div class="top-controls">
+        <select id="themeSelect" class="theme-select" aria-label="Theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="neon">Neon</option>
+        </select>
+        <button id="fullscreenBtn" class="icon-button" aria-label="Full screen">
+            ⛶
+        </button>
+    </div>
+</header>
+
+<main class="layout" id="appRoot">
+    <!-- LEFT PANEL: INPUT + CONTROLS -->
+    <section class="panel left-panel">
+        <h2>Input</h2>
+        <p class="hint">
+            Type items in groups, separated by a blank line.<br>
+            Each line is one item in that group.
+        </p>
+
+        <textarea id="groupsInput" placeholder="Example:
+
+Apple
+Banana
+Pear
+
+Dog
+Cat
+Fish"></textarea>
+
+        <div class="stats" id="stats">
+            0 groups • 0 items
+        </div>
+
+        <div class="button-row primary-row">
+            <button id="startBtn">Start / Smart Pick</button>
+            <button id="randomGroupBtn">Random Group</button>
+            <button id="shuffleBtn">Shuffle Current Group</button>
+        </div>
+
+        <div class="button-row secondary-row">
+            <button id="saveBtn">Save → Code</button>
+            <button id="shareLinkBtn">Copy Share Link</button>
+            <input id="loadInput" placeholder="Enter code">
+            <button id="loadBtn">Load</button>
+        </div>
+
+        <p class="hint small">
+            Shortcuts: ← / → move, <kbd>R</kbd> smart pick, <kbd>Space</kbd> replay card.
+        </p>
+    </section>
+
+    <!-- RIGHT PANEL: CARD + SESSION -->
+    <section class="panel right-panel">
+        <h2>Study</h2>
+
+        <div class="card-area">
+            <div class="arrow left-arrow" id="arrowLeft" aria-label="Previous">
+                &#10094;
+            </div>
+
+            <div id="flashcard" class="card" tabindex="0">
+                Enter some groups on the left and press “Start”.
+            </div>
+
+            <div class="arrow right-arrow" id="arrowRight" aria-label="Next">
+                &#10095;
+            </div>
+        </div>
+
+        <div class="card-actions">
+            <button id="againBtn" class="again-btn">Again</button>
+            <button id="gotItBtn" class="gotit-btn">Got it</button>
+        </div>
+
+        <div class="card-meta">
+            <span id="metaGroup">No groups loaded</span>
+            <span>•</span>
+            <span id="metaItem">No item</span>
+        </div>
+
+        <div class="session-meta" id="sessionMeta">
+            Session: 0:00 • Flips: 0 • Again: 0 • Got it: 0
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    Local data is kept in your browser. Codes and share links encode the deck, not your identity.
+</footer>
+
+<!-- Compression library for code/link sharing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
