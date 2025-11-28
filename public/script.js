@@ -149,4 +149,80 @@ function saveCode() {
     alert("Copied save code:\n\n" + code);
 }
 
-fun
+function loadCode() {
+    const code = document.getElementById("loadInput").value.trim();
+    try {
+        const json = LZString.decompressFromBase64(code);
+        if (!json) throw 0;
+        const data = JSON.parse(json);
+
+        textarea.value = data.text || "";
+        parseInput();
+        randomPick();
+    } catch {
+        alert("Invalid code.");
+    }
+}
+
+// ==========================
+// SHARE LINK
+// ==========================
+
+async function shareLink() {
+    const text = textarea.value.trim();
+    if (!text) return alert("Nothing to share.");
+
+    const res = await fetch("/deck", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ text })
+    });
+
+    if (!res.ok) return alert("Server error.");
+
+    const data = await res.json();
+    const id = data.id;
+
+    const url = window.location.origin + "?id=" + encodeURIComponent(id);
+    navigator.clipboard.writeText(url).catch(()=>{});
+    alert("Copied share link:\n\n" + url);
+}
+
+async function loadFromURL() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+    if (!id) return;
+
+    const res = await fetch("/deck/" + encodeURIComponent(id));
+    if (!res.ok) return;
+
+    const data = await res.json();
+    textarea.value = data.text || "";
+    parseInput();
+    randomPick();
+}
+
+// ==========================
+// EVENTS
+// ==========================
+
+document.getElementById("startBtn").onclick = () => {
+    parseInput();
+    randomPick();
+};
+
+document.getElementById("randomGroupBtn").onclick = randomPick;
+
+document.getElementById("leftArrow").onclick = () => move(-1);
+document.getElementById("rightArrow").onclick = () => move(1);
+
+document.getElementById("saveBtn").onclick = saveCode;
+document.getElementById("loadBtn").onclick = loadCode;
+document.getElementById("shareBtn").onclick = shareLink;
+
+textarea.addEventListener("input", parseInput);
+
+// Load shared deck if ?id=...
+loadFromURL();
+parseInput();
+
