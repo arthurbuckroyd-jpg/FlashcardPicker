@@ -1,24 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="midnight">
 <head>
     <meta charset="UTF-8">
-    <title>Flashcard Picker</title>
+    <title>Flashcard Group Picker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <header>
-        <h1>Flashcard Group Picker</h1>
-    </header>
+<header class="top-bar">
+    <div class="top-left">
+        <div class="made-by">Made by Arthur Buckroyd</div>
+        <h1 class="app-title">Flashcard Group Picker</h1>
+    </div>
+    <div class="top-right">
+        <label class="theme-label">
+            Theme
+            <select id="themeSelect"></select>
+        </label>
+    </div>
+</header>
 
-    <main>
+<main class="layout">
 
-        <section class="left">
-            <h2>Input</h2>
+    <!-- CARD AREA (LEFT / BIGGER) -->
+    <section class="panel panel-card">
+        <div class="card-wrapper">
+            <div class="arrow arrow-left" id="leftArrow">&#10094;</div>
+            <div id="flashcard" class="card">
+                Enter some groups on the right and press “Start”.
+            </div>
+            <div class="arrow arrow-right" id="rightArrow">&#10095;</div>
+        </div>
 
-<textarea id="groupsInput" placeholder="Example with tags:
+        <div class="meta-bar">
+            <span id="metaGroup">No group</span>
+            <span>•</span>
+            <span id="metaItem">No item</span>
+        </div>
+    </section>
+
+    <!-- INPUT / CONTROLS (RIGHT / NARROWER) -->
+    <section class="panel panel-input">
+        <h2>Groups & Tags</h2>
+        <p class="hint">
+            Each block is a group.  
+            Optional: put a tag as the first line using <code>#tag</code>.
+        </p>
+
+        <div class="textarea-wrapper">
+<textarea id="groupsInput" placeholder="Example:
 
 #food
 Apple
@@ -33,49 +65,45 @@ Fish
 #verbs
 Run
 Jump
-Swim"></textarea>
+Swim
 
-            <div id="stats">0 groups • 0 items • 0 tags</div>
+(Press Enter on an empty line to insert a divider)">
+</textarea>
+        </div>
 
-            <button id="startBtn">Start</button>
-            <button id="randomGroupBtn">Random Group</button>
+        <div id="stats" class="stats">0 groups • 0 items • 0 tags</div>
 
-            <div class="tag-control">
-                <h3>Active Tags</h3>
-                <div id="tagList"></div>
+        <div class="button-row">
+            <button id="startBtn" class="btn primary">Start</button>
+            <button id="randomGroupBtn" class="btn subtle">Random card</button>
+        </div>
+
+        <div class="tag-control">
+            <div class="tag-header-row">
+                <h3>Active tags</h3>
+                <span class="tag-hint">Click tags to focus. None selected → all active.</span>
             </div>
+            <div id="tagList" class="tag-list"></div>
+        </div>
 
-            <hr>
+        <hr class="section-divider">
 
-            <h3>Save / Load</h3>
-            <button id="saveBtn">Copy Save Code</button>
+        <h3>Save / Load</h3>
+        <div class="button-row save-row">
+            <button id="saveBtn" class="btn subtle">Copy save code</button>
+        </div>
 
+        <div class="load-row">
             <input id="loadInput" placeholder="Enter code">
-            <button id="loadBtn">Load</button>
+            <button id="loadBtn" class="btn small">Load</button>
+        </div>
 
-            <button id="shareBtn">Copy Share Link</button>
-        </section>
+        <div class="button-row">
+            <button id="shareBtn" class="btn subtle">Copy share link</button>
+        </div>
+    </section>
 
-        <section class="right">
-
-            <div class="card-area">
-
-                <div class="arrow" id="leftArrow">&#10094;</div>
-
-                <div id="flashcard" class="card">Enter some groups and press Start</div>
-
-                <div class="arrow" id="rightArrow">&#10095;</div>
-
-            </div>
-
-            <div class="meta">
-                <span id="metaGroup">No group</span> • 
-                <span id="metaItem">No item</span>
-            </div>
-
-        </section>
-
-    </main>
+</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 <script src="script.js"></script>
