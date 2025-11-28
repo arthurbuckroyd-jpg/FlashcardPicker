@@ -367,20 +367,36 @@ function handleLoadCode() {
     alert("Flashcards restored from code.");
 }
 
-function handleShareLink() {
+async function handleShareLink() {
     const text = textarea.value.trim();
     if (!text) {
         alert("Nothing to share. Enter some groups first.");
         return;
     }
 
-    const compressed = LZString.compressToBase64(text);
-    const base = window.location.origin + window.location.pathname;
-    const url = `${base}?deck=${encodeURIComponent(compressed)}`;
+    try {
+        const res = await fetch("/deck", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+        });
 
-    navigator.clipboard?.writeText(url).catch(() => {});
-    alert("Share link (copied if possible):\n\n" + url);
-}
+        if (!res.ok) {
+            alert("Failed to create share link (server error).");
+            return;
+        }
+
+        const data = await res.json();
+        const id = data.id;
+        const base = window.location.origin + window.location.pathname;
+        const url = `${base}?id=${encodeURIComponent(id)}`;
+
+        navigator.clipboard?.writeText(url).catch(() => {});
+        alert("Share link (copied if possible):\n\n" + url);
+    } catch (err) {
+        console.error(err);
+        alert("Failed to create share link (network error).");
+    }
 
 // On load, check for ?deck= param
 function restoreFromLocalStorageOrURL() {
@@ -494,4 +510,5 @@ function animateCard(type) {
     flashcardEl.classList.remove("flip", "shuffle");
     void flashcardEl.offsetWidth; // force reflow so animation retriggers
     flashcardEl.classList.add(type === "shuffle" ? "shuffle" : "flip");
+
 }
