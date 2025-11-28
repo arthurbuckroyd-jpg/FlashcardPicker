@@ -21,6 +21,11 @@ const sessionMetaEl = document.getElementById("sessionMeta");
 const themeSelect = document.getElementById("themeSelect");
 const appRoot = document.getElementById("appRoot");
 
+const loadingOverlay = document.getElementById("loadingOverlay");
+const loadingMessageEl = document.getElementById("loadingMessage");
+let loadingTimeout = null;
+let wakingTimeout = null;
+
 // Simple Web Audio-based sound effects
 const audioCtx = (window.AudioContext || window.webkitAudioContext)
     ? new (window.AudioContext || window.webkitAudioContext)()
@@ -77,6 +82,36 @@ restoreFromLocalStorageOrURL();
 updateStatsOnly();
 updateMeta();
 updateSessionMeta();
+
+// ========================
+// LOADING OVERLAY HELPERS
+// ========================
+
+function showLoading(message) {
+    clearTimeout(loadingTimeout);
+    clearTimeout(wakingTimeout);
+
+    loadingTimeout = setTimeout(() => {
+        if (loadingMessageEl) {
+            loadingMessageEl.textContent = message || "Contacting server…";
+        }
+        loadingOverlay?.classList.remove("hidden");
+
+        // After 5 seconds, hint that the server might be waking up
+        wakingTimeout = setTimeout(() => {
+            if (loadingOverlay && !loadingOverlay.classList.contains("hidden")) {
+                loadingMessageEl.textContent =
+                    "Server might be waking up (free hosting).\nThis can take a few seconds…";
+            }
+        }, 5000);
+    }, 300); // small delay to avoid flicker on fast responses
+}
+
+function hideLoading() {
+    clearTimeout(loadingTimeout);
+    clearTimeout(wakingTimeout);
+    loadingOverlay?.classList.add("hidden");
+}
 
 // ========================
 // CORE LOGIC
@@ -375,6 +410,8 @@ async function handleShareLink() {
         return;
     }
 
+    showLoading("Creating share link…");
+
     try {
         const res = await fetch("/deck", {
             method: "POST",
@@ -397,6 +434,8 @@ async function handleShareLink() {
     } catch (err) {
         console.error(err);
         alert("Failed to create share link (network error).");
+    } finally {
+        hideLoading();
     }
 }
 
@@ -406,6 +445,8 @@ async function restoreFromLocalStorageOrURL() {
     const idParam = params.get("id");
 
     if (idParam) {
+        showLoading("Loading shared deck…");
+
         try {
             const res = await fetch(`/deck/${encodeURIComponent(idParam)}`);
             if (res.ok) {
@@ -421,6 +462,8 @@ async function restoreFromLocalStorageOrURL() {
             }
         } catch (err) {
             console.error("Error loading deck from id:", err);
+        } finally {
+            hideLoading();
         }
     }
 
