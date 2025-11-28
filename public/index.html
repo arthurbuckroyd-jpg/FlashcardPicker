@@ -62,7 +62,7 @@ Fish"></textarea>
         </div>
 
         <p class="hint small">
-            Shortcuts: ← / → move, <kbd>R</kbd> smart pick, <kbd>Space</kbd> replay card.
+            Shortcuts: ← / → move, <kbd>R</kbd> smart pick, <kbd>Space</kbd> replay card, <kbd>1</kbd>=Again, <kbd>2</kbd>=Got it.
         </p>
     </section>
 
@@ -104,6 +104,14 @@ Fish"></textarea>
 <footer class="footer">
     Local data is kept in your browser. Codes and share links encode the deck, not your identity.
 </footer>
+
+<!-- Loading overlay for slow server calls -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <div id="loadingMessage">Contacting server…</div>
+    </div>
+</div>
 
 <!-- Compression library for code/link sharing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
