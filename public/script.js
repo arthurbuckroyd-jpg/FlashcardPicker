@@ -59,7 +59,7 @@ document.getElementById("fullscreenBtn").addEventListener("click", toggleFullscr
 
 textarea.addEventListener("input", () => {
     localStorage.setItem("fgp_text", textarea.value);
-    parseInput(false); // live-update stats/groups, no smart pick
+    parseInput(false); // live-update stats/groups, no new session
 });
 
 themeSelect.addEventListener("change", () => {
@@ -71,7 +71,7 @@ themeSelect.addEventListener("change", () => {
 // Keyboard shortcuts
 document.addEventListener("keydown", handleKeyShortcuts);
 
-// Initial setup: theme + text + URL deck param
+// Initial setup: theme + text + URL deck id
 applySavedTheme();
 restoreFromLocalStorageOrURL();
 updateStatsOnly();
@@ -131,7 +131,6 @@ function smartPickCard() {
         if (!groups.length) return;
     }
 
-    // Flatten all cards with Leitner weighting
     const candidates = [];
     for (let gi = 0; gi < groups.length; gi++) {
         for (let ii = 0; ii < groups[gi].length; ii++) {
@@ -139,7 +138,6 @@ function smartPickCard() {
             const box = Math.max(1, s.box || 1);
             let weight = 1 / (box * box);
 
-            // Slight bonus if never seen
             if (s.correct === 0 && s.wrong === 0) {
                 weight *= 1.4;
             }
@@ -303,7 +301,6 @@ function markGotIt() {
 // ========================
 
 function autoFitText() {
-    // Smooth scaling: shrink if text overflows card
     const maxSize = 22;
     const minSize = 12;
     let size = maxSize;
@@ -319,7 +316,7 @@ function autoFitText() {
 }
 
 // ========================
-// SAVE / LOAD CODE & SHARE LINK
+// SAVE / LOAD CODE
 // ========================
 
 function generateSaveCode(data) {
@@ -367,6 +364,10 @@ function handleLoadCode() {
     alert("Flashcards restored from code.");
 }
 
+// ========================
+// SHARE LINK VIA BACKEND ID
+// ========================
+
 async function handleShareLink() {
     const text = textarea.value.trim();
     if (!text) {
@@ -397,8 +398,9 @@ async function handleShareLink() {
         console.error(err);
         alert("Failed to create share link (network error).");
     }
+}
 
-// On load, check for ?deck= param
+// On load: check ?id=... or fall back to local storage
 async function restoreFromLocalStorageOrURL() {
     const params = new URLSearchParams(window.location.search);
     const idParam = params.get("id");
@@ -422,7 +424,6 @@ async function restoreFromLocalStorageOrURL() {
         }
     }
 
-    // Fallback to local storage if no id or fetch failed
     const savedText = localStorage.getItem("fgp_text");
     if (savedText) {
         textarea.value = savedText;
@@ -515,6 +516,4 @@ function animateCard(type) {
     flashcardEl.classList.remove("flip", "shuffle");
     void flashcardEl.offsetWidth; // force reflow so animation retriggers
     flashcardEl.classList.add(type === "shuffle" ? "shuffle" : "flip");
-
 }
-
