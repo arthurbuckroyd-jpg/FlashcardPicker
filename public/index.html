@@ -14,11 +14,11 @@
         <span class="logo-text">Flashcard Group Picker</span>
     </div>
     <div class="top-controls">
-        <select id="themeSelect" class="theme-select" aria-label="Theme">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="neon">Neon</option>
-        </select>
+        <div id="levelDisplay" class="level-display">Lv 1 · 0 XP</div>
+        <button id="achievementsBtn" class="icon-button" aria-label="Achievements">
+            ⭐ Achievements
+        </button>
+        <select id="themeSelect" class="theme-select" aria-label="Theme"></select>
         <button id="fullscreenBtn" class="icon-button" aria-label="Full screen">
             ⛶
         </button>
@@ -51,7 +51,7 @@ Fish"></textarea>
         <div class="button-row primary-row">
             <button id="startBtn">Start / Smart Pick</button>
             <button id="randomGroupBtn">Random Group</button>
-            <button id="shuffleBtn">Shuffle Current Group</button>
+            <button id="shuffleBtn">Shuffle Group</button>
         </div>
 
         <div class="button-row secondary-row">
@@ -62,7 +62,8 @@ Fish"></textarea>
         </div>
 
         <p class="hint small">
-            Shortcuts: ← / → move, <kbd>R</kbd> smart pick, <kbd>Space</kbd> replay card, <kbd>1</kbd>=Again, <kbd>2</kbd>=Got it.
+            Shortcuts: ← / → move, <kbd>R</kbd> smart pick, <kbd>Space</kbd> replay card,
+            <kbd>1</kbd>=Again, <kbd>2</kbd>=Got it.
         </p>
     </section>
 
@@ -102,7 +103,7 @@ Fish"></textarea>
 </main>
 
 <footer class="footer">
-    Local data is kept in your browser. Codes and share links encode the deck, not your identity.
+    Local data is kept in your browser. Codes and share links only store deck text, not your achievements.
 </footer>
 
 <!-- Loading overlay for slow server calls -->
@@ -113,8 +114,13 @@ Fish"></textarea>
     </div>
 </div>
 
-<!-- Compression library for code/link sharing -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-<script src="script.js"></script>
-</body>
-</html>
+<!-- Achievements modal -->
+<div id="achievementsModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>Achievements</span>
+            <button id="achievementsClose" class="icon-button small">✕</button>
+        </div>
+
+
