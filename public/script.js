@@ -399,25 +399,30 @@ async function handleShareLink() {
     }
 
 // On load, check for ?deck= param
-function restoreFromLocalStorageOrURL() {
+async function restoreFromLocalStorageOrURL() {
     const params = new URLSearchParams(window.location.search);
-    const deckParam = params.get("deck");
+    const idParam = params.get("id");
 
-    if (deckParam) {
+    if (idParam) {
         try {
-            const text = LZString.decompressFromBase64(decodeURIComponent(deckParam));
-            if (text) {
+            const res = await fetch(`/deck/${encodeURIComponent(idParam)}`);
+            if (res.ok) {
+                const data = await res.json();
+                const text = data.text || "";
                 textarea.value = text;
                 localStorage.setItem("fgp_text", text);
                 parseInput();
                 smartPickCard();
                 return;
+            } else {
+                console.warn("Deck id not found on server");
             }
-        } catch {
-            // ignore and fall back
+        } catch (err) {
+            console.error("Error loading deck from id:", err);
         }
     }
 
+    // Fallback to local storage if no id or fetch failed
     const savedText = localStorage.getItem("fgp_text");
     if (savedText) {
         textarea.value = savedText;
@@ -512,3 +517,4 @@ function animateCard(type) {
     flashcardEl.classList.add(type === "shuffle" ? "shuffle" : "flip");
 
 }
+
