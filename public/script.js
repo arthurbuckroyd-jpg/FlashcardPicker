@@ -20,12 +20,14 @@ const THEME_KEY = "fg_theme_v1";
 // STATE
 // =============
 
-let groups = [];           // [{ tag, items }]
+let groups = [];           
 let activeTags = new Set();
-let flatActiveItems = [];  // [{ groupIndex, itemIndex, value }]
+let flatActiveItems = [];  
 let currentIndex = -1;
 
-// DOM refs
+// Leitner spaced repetition model
+let leitner = [];
+
 const textarea    = document.getElementById("groupsInput");
 const statsEl     = document.getElementById("stats");
 const flashcard   = document.getElementById("flashcard");
@@ -34,7 +36,6 @@ const metaItemEl  = document.getElementById("metaItem");
 const tagListEl   = document.getElementById("tagList");
 const themeSelect = document.getElementById("themeSelect");
 
-// audio
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 const audioCtx = AudioCtx ? new AudioCtx() : null;
 
@@ -47,7 +48,7 @@ restoreTheme();
 wireEvents();
 loadFromURL();
 parseInput();
-randomPick();
+smartPick();
 
 // =============
 // THEME LOGIC
@@ -101,10 +102,10 @@ function isDividerLine(line) {
 
 function parseInput() {
     const raw = textarea.value || "";
-    // Treat blank lines OR divider lines as group boundaries
-const blocks = raw
-    .replace(/^[─\-_]{3,}$/gm, "")   // divider lines → treated like blank lines
-    .split(/\n\s*\n/);
+
+    const blocks = raw
+        .replace(/^[─\-_]{3,}$/gm, "")
+        .split(/\n\s*\n/);
 
     const newGroups = [];
 
@@ -129,9 +130,20 @@ const blocks = raw
     }
 
     groups = newGroups;
+
+    // Build Leitner structure
+    leitner = groups.map(g =>
+        g.items.map(() => ({
+            box: 1,
+            correct: 0,
+            wrong: 0
+        }))
+    );
+
     rebuildTagList();
     rebuildActiveItems();
     updateStats();
+
     if (!flatActiveItems.length) {
         flashcard.textContent = "No active items. Add groups or tags.";
         metaGroupEl.textContent = "No group";
@@ -156,19 +168,17 @@ function rebuildTagList() {
 
         pill.textContent = tag;
         pill.addEventListener("click", () => {
-            // toggle
             if (activeTags.has(tag)) {
                 activeTags.delete(tag);
             } else {
                 activeTags.add(tag);
             }
             if (activeTags.size === 0) {
-                // none selected means "all active"
                 activeTags = new Set();
             }
             rebuildTagList();
             rebuildActiveItems();
-            randomPick();
+            smartPick();
             playSound("move");
         });
 
@@ -199,23 +209,70 @@ function rebuildActiveItems() {
 }
 
 // =============
-// NAVIGATION
+// SPACED REPETITION (SMART PICK)
 // =============
 
-function randomPick() {
+function smartPick() {
     if (!flatActiveItems.length) return;
 
-    const oldIndex = currentIndex;
-    let idx = Math.floor(Math.random() * flatActiveItems.length);
+    const candidates = [];
 
-    // try to avoid same card if multiple items exist
-    if (flatActiveItems.length > 1 && idx === oldIndex) {
-        idx = (idx + 1) % flatActiveItems.length;
+    for (let idx = 0; idx < flatActiveItems.length; idx++) {
+        const { groupIndex: gi, itemIndex: ii } = flatActiveItems[idx];
+        const card = leitner[gi][ii];
+
+        const box = Math.max(1, card.box);
+        let weight = 1 / (box * box);
+
+        if (card.correct === 0 && card.wrong === 0) {
+            weight *= 1.4;
+        }
+
+        candidates.push({ idx, weight });
     }
 
-    currentIndex = idx;
-    updateCard("flip");
+    const total = candidates.reduce((s, c) => s + c.weight, 0);
+    let r = Math.random() * total;
+
+    for (const c of candidates) {
+        r -= c.weight;
+        if (r <= 0) {
+            currentIndex = c.idx;
+            updateCard("flip");
+            return;
+        }
+    }
 }
+
+// =============
+// CONFIDENT / NOT CONFIDENT
+// =============
+
+function markConfident() {
+    if (currentIndex < 0) return;
+    const { groupIndex: gi, itemIndex: ii } = flatActiveItems[currentIndex];
+    const card = leitner[gi][ii];
+
+    card.correct++;
+    if (card.box < 5) card.box++;
+
+    smartPick();
+}
+
+function markNotConfident() {
+    if (currentIndex < 0) return;
+    const { groupIndex: gi, itemIndex: ii } = flatActiveItems[currentIndex];
+    const card = leitner[gi][ii];
+
+    card.wrong++;
+    card.box = 1;
+
+    smartPick();
+}
+
+// =============
+// NAVIGATION
+// =============
 
 function move(offset) {
     if (!flatActiveItems.length) return;
@@ -248,7 +305,7 @@ function updateCard(animClass) {
 
     if (animClass) {
         flashcard.classList.remove("flip", "slide-left", "slide-right");
-        void flashcard.offsetWidth; // reflow
+        void flashcard.offsetWidth;
         flashcard.classList.add(animClass);
     }
 
@@ -267,7 +324,7 @@ function updateStats() {
 }
 
 // =============
-// SAVE / LOAD (CODE)
+// SAVE / LOAD CODE
 // =============
 
 function handleSaveCode() {
@@ -278,7 +335,7 @@ function handleSaveCode() {
     }
     const code = LZString.compressToBase64(JSON.stringify({ text }));
     navigator.clipboard?.writeText(code).catch(() => {});
-    alert("Save code copied (if allowed by browser).");
+    alert("Save code copied (if allowed).");
     playSound("ok");
 }
 
@@ -292,17 +349,17 @@ function handleLoadCode() {
         const data = JSON.parse(json);
         textarea.value = data.text || "";
         parseInput();
-        randomPick();
+        smartPick();
         playSound("ok");
-        alert("Loaded from code.");
+        alert("Loaded.");
     } catch {
         playSound("error");
-        alert("Invalid or corrupted code.");
+        alert("Invalid code.");
     }
 }
 
 // =============
-// SHARE LINK (SERVER)
+// SHARE LINKS (SERVER)
 // =============
 
 async function handleShareLink() {
@@ -321,20 +378,20 @@ async function handleShareLink() {
 
         if (!res.ok) {
             playSound("error");
-            alert("Server error while creating link.");
+            alert("Server error.");
             return;
         }
 
         const data = await res.json();
         const id = data.id;
         const url = window.location.origin + "?id=" + encodeURIComponent(id);
+
         navigator.clipboard?.writeText(url).catch(() => {});
         playSound("ok");
-        alert("Share link copied (if allowed by browser).");
-    } catch (e) {
-        console.error(e);
+        alert("Share link copied.");
+    } catch {
         playSound("error");
-        alert("Network error while creating link.");
+        alert("Network error.");
     }
 }
 
@@ -349,10 +406,8 @@ async function loadFromURL() {
         const data = await res.json();
         textarea.value = data.text || "";
         parseInput();
-        randomPick();
-    } catch (e) {
-        console.error(e);
-    }
+        smartPick();
+    } catch {}
 }
 
 // =============
@@ -369,7 +424,6 @@ textarea.addEventListener("keydown", (e) => {
     const lineStart = before.lastIndexOf("\n") + 1;
     const currentLine = before.slice(lineStart);
 
-    // If current line is empty, insert a divider line instead
     if (currentLine.trim().length === 0) {
         e.preventDefault();
         const divider = "──────────────";
@@ -382,7 +436,6 @@ textarea.addEventListener("keydown", (e) => {
     }
 });
 
-// Also re-parse on normal edits
 textarea.addEventListener("input", () => {
     parseInput();
 });
@@ -415,9 +468,7 @@ function playSound(type) {
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.18);
-    } catch {
-        // if audio fails, who cares
-    }
+    } catch {}
 }
 
 // =============
@@ -427,11 +478,11 @@ function playSound(type) {
 function wireEvents() {
     document.getElementById("startBtn").addEventListener("click", () => {
         parseInput();
-        randomPick();
+        smartPick();
     });
 
     document.getElementById("randomGroupBtn").addEventListener("click", () => {
-        randomPick();
+        smartPick();
     });
 
     document.getElementById("leftArrow").addEventListener("click", () => {
@@ -446,7 +497,9 @@ function wireEvents() {
     document.getElementById("loadBtn").addEventListener("click", handleLoadCode);
     document.getElementById("shareBtn").addEventListener("click", handleShareLink);
 
-    // keyboard shortcuts
+    document.getElementById("confBtn").addEventListener("click", markConfident);
+    document.getElementById("notConfBtn").addEventListener("click", markNotConfident);
+
     document.addEventListener("keydown", (e) => {
         const tag = (e.target.tagName || "").toLowerCase();
         if (tag === "textarea" || tag === "input" || tag === "select") return;
@@ -459,8 +512,7 @@ function wireEvents() {
             move(1);
         } else if (e.key.toLowerCase() === "r") {
             e.preventDefault();
-            randomPick();
+            smartPick();
         }
     });
 }
-
