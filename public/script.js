@@ -101,7 +101,10 @@ function isDividerLine(line) {
 
 function parseInput() {
     const raw = textarea.value || "";
-    const blocks = raw.split(/\n\s*\n/); // blank-line separated groups
+    // Treat blank lines OR divider lines as group boundaries
+const blocks = raw
+    .replace(/^[─\-_]{3,}$/gm, "")   // divider lines → treated like blank lines
+    .split(/\n\s*\n/);
 
     const newGroups = [];
 
@@ -460,3 +463,4 @@ function wireEvents() {
         }
     });
 }
+
