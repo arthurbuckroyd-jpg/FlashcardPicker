@@ -268,8 +268,6 @@ button:active {
     transition: transform 0.35s ease, box-shadow 0.2s ease, font-size 0.15s ease;
 }
 
-/* Smooth text scaling: font-size modified in JS */
-
 /* Flip / shuffle animations */
 
 .card.flip {
@@ -375,6 +373,47 @@ button:active {
     color: var(--text-muted);
 }
 
+/* Loading overlay */
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+.loading-box {
+    background: var(--panel);
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-strong);
+    text-align: center;
+    font-size: 14px;
+    color: var(--text);
+    max-width: 260px;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.25);
+    border-top-color: var(--accent-strong);
+    margin: 0 auto 8px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* Responsive */
 
 @media (max-width: 800px) {
@@ -407,3 +446,9 @@ button:active {
         min-width: 0;
     }
 }
+
+    #loadInput {
+        min-width: 0;
+    }
+}
+
