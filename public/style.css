@@ -250,25 +250,25 @@ body {
 }
 
 .card {
-    background: var(--panel-soft);
-    border-radius: 18px;
-    padding: 30px 32px;
-    min-width: 280px;
-    max-width: 460px;
-    min-height: 130px;
-    border: 1px solid var(--border-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    min-width: 60%;
+    max-width: 70%;
+    min-height: 45vh;
+
+    padding: 3rem 3rem;
+
+    font-size: 2rem;
+    line-height: 1.4;
     text-align: center;
-    font-size: 24px;
-    font-weight: 500;
-    box-shadow:
-        0 18px 40px rgba(0,0,0,0.7),
-        0 0 0 1px rgba(255,255,255,0.02);
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.22s ease, box-shadow 0.22s ease;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 1.4rem;
+    backdrop-filter: blur(14px);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+
+    transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
 .card::before {
@@ -312,28 +312,16 @@ body {
 }
 
 .arrow {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--glass);
-    border: 1px solid var(--border-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
+    font-size: 3rem;
     cursor: pointer;
-    color: var(--accent-strong);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.7);
-    backdrop-filter: blur(10px);
-    transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease;
+    opacity: 0.75;
+    transition: opacity 0.2s, transform 0.1s;
 }
 
 .arrow:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(0,0,0,0.8);
-    background: rgba(255,255,255,0.08);
+    opacity: 1;
+    transform: scale(1.15);
 }
-
 .arrow:active {
     transform: translateY(0);
     box-shadow: 0 5px 14px rgba(0,0,0,0.7);
@@ -537,5 +525,18 @@ body {
     }
     .panel-card, .panel-input {
         flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 700px) {
+    .card {
+        min-width: 90%;
+        min-height: 40vh;
+        font-size: 1.6rem;
+        padding: 2rem;
+    }
+
+    .arrow {
+        font-size: 2.5rem;
     }
 }
