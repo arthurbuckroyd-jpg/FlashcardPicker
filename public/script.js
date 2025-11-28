@@ -1,36 +1,120 @@
-alert("SCRIPT LOADED");
-// ==========================
-// STATE
-// ==========================
+// =============
+// THEME SETUP
+// =============
 
-let groups = [];  // [{ tag:"animals", items:[...] }, ...]
+const THEMES = [
+    { id: "midnight", name: "Midnight Blue" },
+    { id: "mint",     name: "Pastel Mint" },
+    { id: "solar",    name: "Solarized" },
+    { id: "terminal", name: "Terminal Green" },
+    { id: "royal",    name: "Royal Purple" },
+    { id: "mango",    name: "Mango Sunset" },
+    { id: "vapor",    name: "Vaporwave" },
+    { id: "sakura",   name: "Sakura Pink" },
+    { id: "cyber",    name: "Cyberpunk Grid" }
+];
+
+const THEME_KEY = "fg_theme_v1";
+
+// =============
+// STATE
+// =============
+
+let groups = [];           // [{ tag, items }]
 let activeTags = new Set();
-let flatActiveItems = []; // flattened list of active items w/ references
+let flatActiveItems = [];  // [{ groupIndex, itemIndex, value }]
 let currentIndex = -1;
 
-// DOM
-const textarea = document.getElementById("groupsInput");
-const statsEl = document.getElementById("stats");
-const flashcard = document.getElementById("flashcard");
-const metaGroup = document.getElementById("metaGroup");
-const metaItem = document.getElementById("metaItem");
-const tagListEl = document.getElementById("tagList");
+// DOM refs
+const textarea    = document.getElementById("groupsInput");
+const statsEl     = document.getElementById("stats");
+const flashcard   = document.getElementById("flashcard");
+const metaGroupEl = document.getElementById("metaGroup");
+const metaItemEl  = document.getElementById("metaItem");
+const tagListEl   = document.getElementById("tagList");
+const themeSelect = document.getElementById("themeSelect");
 
-// ==========================
+// audio
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = AudioCtx ? new AudioCtx() : null;
+
+// =============
+// INIT
+// =============
+
+initThemeSelector();
+restoreTheme();
+wireEvents();
+loadFromURL();
+parseInput();
+randomPick();
+
+// =============
+// THEME LOGIC
+// =============
+
+function initThemeSelector() {
+    THEMES.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.name;
+        themeSelect.appendChild(opt);
+    });
+
+    themeSelect.addEventListener("change", () => {
+        const id = themeSelect.value;
+        applyTheme(id);
+        saveTheme(id);
+        playSound("move");
+    });
+}
+
+function saveTheme(id) {
+    try {
+        localStorage.setItem(THEME_KEY, id);
+    } catch {}
+}
+
+function restoreTheme() {
+    let id = null;
+    try {
+        id = localStorage.getItem(THEME_KEY);
+    } catch {}
+    if (!id || !THEMES.find(t => t.id === id)) {
+        id = "midnight";
+    }
+    applyTheme(id);
+    themeSelect.value = id;
+}
+
+function applyTheme(id) {
+    document.documentElement.setAttribute("data-theme", id);
+}
+
+// =============
 // PARSE INPUT
-// ==========================
+// =============
+
+function isDividerLine(line) {
+    return /^[-─_=]{3,}$/.test(line);
+}
 
 function parseInput() {
-    const raw = textarea.value;
-    const blocks = raw.split(/\n\s*\n/);
+    const raw = textarea.value || "";
+    const blocks = raw.split(/\n\s*\n/); // blank-line separated groups
 
-    groups = [];
+    const newGroups = [];
 
     for (const block of blocks) {
-        const lines = block.split("\n").map(x => x.trim()).filter(Boolean);
+        let lines = block
+            .split("\n")
+            .map(l => l.trim())
+            .filter(l => l.length > 0 && !isDividerLine(l));
+
         if (!lines.length) continue;
 
         let tag = "default";
+
         if (lines[0].startsWith("#")) {
             tag = lines[0].slice(1).trim() || "default";
             lines.shift();
@@ -38,155 +122,217 @@ function parseInput() {
 
         if (!lines.length) continue;
 
-        groups.push({
-            tag,
-            items: lines
-        });
+        newGroups.push({ tag, items: lines });
     }
 
+    groups = newGroups;
     rebuildTagList();
-    rebuildActiveItemList();
+    rebuildActiveItems();
     updateStats();
+    if (!flatActiveItems.length) {
+        flashcard.textContent = "No active items. Add groups or tags.";
+        metaGroupEl.textContent = "No group";
+        metaItemEl.textContent = "No item";
+    }
 }
 
-// ==========================
+// =============
 // TAG HANDLING
-// ==========================
+// =============
 
 function rebuildTagList() {
     const tags = [...new Set(groups.map(g => g.tag))];
     tagListEl.innerHTML = "";
 
     tags.forEach(tag => {
-        const div = document.createElement("div");
-        div.className = "tag-item";
-        if (activeTags.size === 0 || activeTags.has(tag)) {
-            div.classList.add("active");
-        }
+        const pill = document.createElement("div");
+        pill.className = "tag-pill";
 
-        div.textContent = tag;
-        div.addEventListener("click", () => {
+        const isActive = activeTags.size === 0 || activeTags.has(tag);
+        if (isActive) pill.classList.add("active");
+
+        pill.textContent = tag;
+        pill.addEventListener("click", () => {
+            // toggle
             if (activeTags.has(tag)) {
                 activeTags.delete(tag);
             } else {
                 activeTags.add(tag);
             }
-
             if (activeTags.size === 0) {
-                // clicking everything off = treat as "all on"
+                // none selected means "all active"
                 activeTags = new Set();
             }
-
             rebuildTagList();
-            rebuildActiveItemList();
+            rebuildActiveItems();
+            randomPick();
+            playSound("move");
         });
 
-        tagListEl.appendChild(div);
+        tagListEl.appendChild(pill);
     });
 }
 
-function isTagActive(tag) {
+function tagIsActive(tag) {
     if (activeTags.size === 0) return true;
     return activeTags.has(tag);
 }
 
-function rebuildActiveItemList() {
+function rebuildActiveItems() {
     flatActiveItems = [];
 
     groups.forEach((g, gi) => {
-        if (!isTagActive(g.tag)) return;
+        if (!tagIsActive(g.tag)) return;
         g.items.forEach((item, ii) => {
             flatActiveItems.push({ groupIndex: gi, itemIndex: ii, value: item });
         });
     });
 
-    currentIndex = -1;
+    if (!flatActiveItems.length) {
+        currentIndex = -1;
+    } else if (currentIndex >= flatActiveItems.length) {
+        currentIndex = 0;
+    }
 }
 
-// ==========================
+// =============
 // NAVIGATION
-// ==========================
+// =============
 
 function randomPick() {
-    if (!flatActiveItems.length) {
-        flashcard.textContent = "No active items.";
-        return;
+    if (!flatActiveItems.length) return;
+
+    const oldIndex = currentIndex;
+    let idx = Math.floor(Math.random() * flatActiveItems.length);
+
+    // try to avoid same card if multiple items exist
+    if (flatActiveItems.length > 1 && idx === oldIndex) {
+        idx = (idx + 1) % flatActiveItems.length;
     }
-    currentIndex = Math.floor(Math.random() * flatActiveItems.length);
-    updateCard();
+
+    currentIndex = idx;
+    updateCard("flip");
 }
 
 function move(offset) {
     if (!flatActiveItems.length) return;
-    currentIndex = (currentIndex + offset + flatActiveItems.length) % flatActiveItems.length;
-    updateCard();
+
+    if (currentIndex === -1) currentIndex = 0;
+    else currentIndex = (currentIndex + offset + flatActiveItems.length) % flatActiveItems.length;
+
+    const anim = offset < 0 ? "slide-left" : "slide-right";
+    updateCard(anim);
 }
 
-function updateCard() {
+// =============
+// CARD RENDER
+// =============
+
+function updateCard(animClass) {
+    if (currentIndex < 0 || !flatActiveItems.length) {
+        flashcard.textContent = "No active items.";
+        metaGroupEl.textContent = "No group";
+        metaItemEl.textContent = "No item";
+        return;
+    }
+
     const entry = flatActiveItems[currentIndex];
-    const g = groups[entry.groupIndex];
+    const group = groups[entry.groupIndex];
 
     flashcard.textContent = entry.value;
-    metaGroup.textContent = `Group: ${g.tag}`;
-    metaItem.textContent = `Item ${entry.itemIndex + 1} of ${g.items.length}`;
+    metaGroupEl.textContent = `Group: ${group.tag}`;
+    metaItemEl.textContent = `Item ${entry.itemIndex + 1} of ${group.items.length}`;
+
+    if (animClass) {
+        flashcard.classList.remove("flip", "slide-left", "slide-right");
+        void flashcard.offsetWidth; // reflow
+        flashcard.classList.add(animClass);
+    }
+
+    playSound("flip");
 }
 
 function updateStats() {
     const groupCount = groups.length;
-    const itemCount = groups.reduce((n, g) => n + g.items.length, 0);
+    const itemCount = groups.reduce((sum, g) => sum + g.items.length, 0);
     const tags = new Set(groups.map(g => g.tag));
-    statsEl.textContent = `${groupCount} groups • ${itemCount} items • ${tags.size} tags`;
+
+    statsEl.textContent =
+        `${groupCount} group${groupCount !== 1 ? "s" : ""} • ` +
+        `${itemCount} item${itemCount !== 1 ? "s" : ""} • ` +
+        `${tags.size} tag${tags.size !== 1 ? "s" : ""}`;
 }
 
-// ==========================
-// SAVE / LOAD
-// ==========================
+// =============
+// SAVE / LOAD (CODE)
+// =============
 
-function saveCode() {
+function handleSaveCode() {
     const text = textarea.value.trim();
-    const json = JSON.stringify({ text });
-    const code = LZString.compressToBase64(json);
-    navigator.clipboard.writeText(code).catch(()=>{});
-    alert("Copied save code:\n\n" + code);
+    if (!text) {
+        alert("Nothing to save.");
+        return;
+    }
+    const code = LZString.compressToBase64(JSON.stringify({ text }));
+    navigator.clipboard?.writeText(code).catch(() => {});
+    alert("Save code copied (if allowed by browser).");
+    playSound("ok");
 }
 
-function loadCode() {
+function handleLoadCode() {
     const code = document.getElementById("loadInput").value.trim();
+    if (!code) return;
+
     try {
         const json = LZString.decompressFromBase64(code);
-        if (!json) throw 0;
+        if (!json) throw new Error("empty");
         const data = JSON.parse(json);
-
         textarea.value = data.text || "";
         parseInput();
         randomPick();
+        playSound("ok");
+        alert("Loaded from code.");
     } catch {
-        alert("Invalid code.");
+        playSound("error");
+        alert("Invalid or corrupted code.");
     }
 }
 
-// ==========================
-// SHARE LINK
-// ==========================
+// =============
+// SHARE LINK (SERVER)
+// =============
 
-async function shareLink() {
+async function handleShareLink() {
     const text = textarea.value.trim();
-    if (!text) return alert("Nothing to share.");
+    if (!text) {
+        alert("Nothing to share.");
+        return;
+    }
 
-    const res = await fetch("/deck", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ text })
-    });
+    try {
+        const res = await fetch("/deck", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+        });
 
-    if (!res.ok) return alert("Server error.");
+        if (!res.ok) {
+            playSound("error");
+            alert("Server error while creating link.");
+            return;
+        }
 
-    const data = await res.json();
-    const id = data.id;
-
-    const url = window.location.origin + "?id=" + encodeURIComponent(id);
-    navigator.clipboard.writeText(url).catch(()=>{});
-    alert("Copied share link:\n\n" + url);
+        const data = await res.json();
+        const id = data.id;
+        const url = window.location.origin + "?id=" + encodeURIComponent(id);
+        navigator.clipboard?.writeText(url).catch(() => {});
+        playSound("ok");
+        alert("Share link copied (if allowed by browser).");
+    } catch (e) {
+        console.error(e);
+        playSound("error");
+        alert("Network error while creating link.");
+    }
 }
 
 async function loadFromURL() {
@@ -194,37 +340,123 @@ async function loadFromURL() {
     const id = params.get("id");
     if (!id) return;
 
-    const res = await fetch("/deck/" + encodeURIComponent(id));
-    if (!res.ok) return;
-
-    const data = await res.json();
-    textarea.value = data.text || "";
-    parseInput();
-    randomPick();
+    try {
+        const res = await fetch("/deck/" + encodeURIComponent(id));
+        if (!res.ok) return;
+        const data = await res.json();
+        textarea.value = data.text || "";
+        parseInput();
+        randomPick();
+    } catch (e) {
+        console.error(e);
+    }
 }
 
-// ==========================
-// EVENTS
-// ==========================
+// =============
+// TEXTAREA DIVIDER
+// =============
 
-document.getElementById("startBtn").onclick = () => {
+textarea.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+
+    const value = textarea.value;
+    const pos = textarea.selectionStart;
+
+    const before = value.slice(0, pos);
+    const lineStart = before.lastIndexOf("\n") + 1;
+    const currentLine = before.slice(lineStart);
+
+    // If current line is empty, insert a divider line instead
+    if (currentLine.trim().length === 0) {
+        e.preventDefault();
+        const divider = "──────────────";
+        const insert = divider + "\n";
+        const newValue = value.slice(0, pos) + insert + value.slice(pos);
+        textarea.value = newValue;
+        const newPos = pos + insert.length;
+        textarea.setSelectionRange(newPos, newPos);
+        parseInput();
+    }
+});
+
+// Also re-parse on normal edits
+textarea.addEventListener("input", () => {
     parseInput();
-    randomPick();
-};
+});
 
-document.getElementById("randomGroupBtn").onclick = randomPick;
+// =============
+// SOUND EFFECTS
+// =============
 
-document.getElementById("leftArrow").onclick = () => move(-1);
-document.getElementById("rightArrow").onclick = () => move(1);
+function playSound(type) {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
 
-document.getElementById("saveBtn").onclick = saveCode;
-document.getElementById("loadBtn").onclick = loadCode;
-document.getElementById("shareBtn").onclick = shareLink;
+        let freq = 440;
 
-textarea.addEventListener("input", parseInput);
+        if (type === "flip") freq = 520;
+        else if (type === "move") freq = 360;
+        else if (type === "ok") freq = 680;
+        else if (type === "error") freq = 220;
 
-// Load shared deck if ?id=...
-loadFromURL();
-parseInput();
+        osc.frequency.value = freq;
 
+        const now = audioCtx.currentTime;
+        gain.gain.setValueAtTime(0.0, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
 
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+    } catch {
+        // if audio fails, who cares
+    }
+}
+
+// =============
+// WIRING
+// =============
+
+function wireEvents() {
+    document.getElementById("startBtn").addEventListener("click", () => {
+        parseInput();
+        randomPick();
+    });
+
+    document.getElementById("randomGroupBtn").addEventListener("click", () => {
+        randomPick();
+    });
+
+    document.getElementById("leftArrow").addEventListener("click", () => {
+        move(-1);
+    });
+
+    document.getElementById("rightArrow").addEventListener("click", () => {
+        move(1);
+    });
+
+    document.getElementById("saveBtn").addEventListener("click", handleSaveCode);
+    document.getElementById("loadBtn").addEventListener("click", handleLoadCode);
+    document.getElementById("shareBtn").addEventListener("click", handleShareLink);
+
+    // keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+        const tag = (e.target.tagName || "").toLowerCase();
+        if (tag === "textarea" || tag === "input" || tag === "select") return;
+
+        if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            move(-1);
+        } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            move(1);
+        } else if (e.key.toLowerCase() === "r") {
+            e.preventDefault();
+            randomPick();
+        }
+    });
+}
