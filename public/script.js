@@ -1,3 +1,4 @@
+alert("SCRIPT LOADED");
 // ==========================
 // STATE
 // ==========================
@@ -225,4 +226,5 @@ textarea.addEventListener("input", parseInput);
 // Load shared deck if ?id=...
 loadFromURL();
 parseInput();
+
 
