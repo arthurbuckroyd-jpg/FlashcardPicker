@@ -275,10 +275,25 @@ function markNotConfident() {
 // =============
 
 function move(offset) {
-    if (!flatActiveItems.length) return;
+    if (currentIndex < 0 || !flatActiveItems.length) return;
 
-    if (currentIndex === -1) currentIndex = 0;
-    else currentIndex = (currentIndex + offset + flatActiveItems.length) % flatActiveItems.length;
+    const entry = flatActiveItems[currentIndex];
+    const groupIdx = entry.groupIndex;
+
+    // get all items in the current group
+    const items = groups[groupIdx].items;
+    let itemIdx = entry.itemIndex;
+
+    // wrap within the group ONLY
+    itemIdx = (itemIdx + offset + items.length) % items.length;
+
+    // find the matching flatActiveItems index
+    const newIndex = flatActiveItems.findIndex(e =>
+        e.groupIndex === groupIdx && e.itemIndex === itemIdx
+    );
+
+    if (newIndex === -1) return; // shouldn't happen but whatever
+    currentIndex = newIndex;
 
     const anim = offset < 0 ? "slide-left" : "slide-right";
     updateCard(anim);
@@ -516,3 +531,4 @@ function wireEvents() {
         }
     });
 }
+
